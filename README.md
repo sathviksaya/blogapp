@@ -28,3 +28,7 @@ A blog application built using flutter.
 
 8. All Blogs Screen - 2
 ![plot](./screenshots/allBlogsAfter.jpg)
+
+<p align="center">
+  <img src="./screenshots/signinScreen.jpg" width="350" alt="accessibility text">
+</p>
