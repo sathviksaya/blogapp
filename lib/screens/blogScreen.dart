@@ -15,6 +15,7 @@ class BlogScreen extends StatefulWidget {
 
 class _BlogScreenState extends State<BlogScreen> {
   late String newComment;
+  late bool liked = false;
   TextEditingController commentField = new TextEditingController();
   int commentsCount = 0, likesCount = 0;
 
@@ -38,6 +39,19 @@ class _BlogScreenState extends State<BlogScreen> {
       setState(() {
         likesCount = value.docs.length;
       });
+    });
+    await FirebaseFirestore.instance
+        .collection("blogPosts")
+        .doc(widget.blog.id)
+        .collection("likes")
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .get()
+        .then((value) {
+      if(value.exists) {
+        setState(() {
+          liked = true;
+        });
+      }
     });
   }
 
@@ -190,7 +204,42 @@ class _BlogScreenState extends State<BlogScreen> {
                   ),
                 ),
                 SizedBox(
-                  height: 20,
+                  height: 10,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Like this Blog  "),
+                    IconButton(
+                      onPressed: () async {
+                        setState(() {
+                          liked = !liked;
+                        });
+                        liked
+                            ? await FirebaseFirestore.instance
+                                .collection("blogPosts")
+                                .doc(widget.blog.id)
+                                .collection("likes")
+                                .doc(FirebaseAuth.instance.currentUser!.uid)
+                                .set({
+                                "liked": 'liked',
+                              })
+                            : await FirebaseFirestore.instance
+                                .collection("blogPosts")
+                                .doc(widget.blog.id)
+                                .collection("likes")
+                                .doc(FirebaseAuth.instance.currentUser!.uid)
+                                .delete();
+                      },
+                      icon: Icon(
+                        liked ? Icons.favorite : Icons.favorite_border,
+                        color: Colors.red,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: 10,
                 ),
                 Text(
                   "Comments",
@@ -240,6 +289,7 @@ class _BlogScreenState extends State<BlogScreen> {
                             'commentator':
                                 FirebaseAuth.instance.currentUser!.displayName,
                           });
+                          getCounts();
                           commentField.clear();
                         },
                         icon: Icon(

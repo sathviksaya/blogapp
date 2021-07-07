@@ -13,6 +13,7 @@ class BlogCard extends StatefulWidget {
 
 class _BlogCardState extends State<BlogCard> {
   int commentsCount = 0, likesCount = 0;
+  bool isNew = true;
 
   void getCounts() async {
     await FirebaseFirestore.instance
@@ -35,6 +36,7 @@ class _BlogCardState extends State<BlogCard> {
         likesCount = value.docs.length;
       });
     });
+    isNew = commentsCount == 0 && likesCount == 0 ? true : false;
   }
 
   @override
@@ -45,7 +47,6 @@ class _BlogCardState extends State<BlogCard> {
 
   @override
   Widget build(BuildContext context) {
-    bool isNew = commentsCount == 0 && likesCount == 0 ? true : false;
     return GestureDetector(
       onTap: () {
         Navigator.push(
