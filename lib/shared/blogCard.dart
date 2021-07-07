@@ -1,4 +1,5 @@
 import 'package:blogapp/screens/blogScreen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -11,12 +12,40 @@ class BlogCard extends StatefulWidget {
 }
 
 class _BlogCardState extends State<BlogCard> {
+  int commentsCount = 0, likesCount = 0;
+
+  void getCounts() async {
+    await FirebaseFirestore.instance
+        .collection("blogPosts")
+        .doc(widget.blog.id)
+        .collection("comments")
+        .get()
+        .then((value) {
+      setState(() {
+        commentsCount = value.docs.length;
+      });
+    });
+    await FirebaseFirestore.instance
+        .collection("blogPosts")
+        .doc(widget.blog.id)
+        .collection("likes")
+        .get()
+        .then((value) {
+      setState(() {
+        likesCount = value.docs.length;
+      });
+    });
+  }
+
+  @override
+  void initState() {
+    getCounts();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
-    bool isNew =
-        widget.blog["likes"].length == 0 && widget.blog["comments"].length == 0
-            ? true
-            : false;
+    bool isNew = commentsCount == 0 && likesCount == 0 ? true : false;
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -57,7 +86,7 @@ class _BlogCardState extends State<BlogCard> {
               padding: const EdgeInsets.all(10),
               width: MediaQuery.of(context).size.width - 30,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withOpacity(0.9),
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(15),
                   bottomRight: Radius.circular(15),
@@ -102,7 +131,7 @@ class _BlogCardState extends State<BlogCard> {
                                       width: 5,
                                     ),
                                     Text(
-                                      widget.blog["likes"].length.toString(),
+                                      likesCount.toString(),
                                       style: TextStyle(
                                         color: Colors.black54,
                                         fontSize: 20,
@@ -125,9 +154,9 @@ class _BlogCardState extends State<BlogCard> {
                                       width: 5,
                                     ),
                                     Text(
-                                      widget.blog["comments"].length.toString(),
+                                      commentsCount.toString(),
                                       style: TextStyle(
-                                        color: Colors.black,
+                                        color: Colors.black54,
                                         fontSize: 20,
                                         fontWeight: FontWeight.w400,
                                       ),

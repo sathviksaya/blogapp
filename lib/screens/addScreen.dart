@@ -50,12 +50,11 @@ class _AddScreenState extends State<AddScreen> {
         .set({
       "uploadTime": uploadTime,
       "author": FirebaseAuth.instance.currentUser!.uid,
+      "authorName": FirebaseAuth.instance.currentUser!.displayName,
       "title": title,
       "blogPoster": blogPoster,
       "description": description,
       "source": source,
-      "likes": {},
-      "comments": {},
     });
   }
 
