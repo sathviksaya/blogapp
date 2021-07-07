@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:flutter/painting.dart';
@@ -17,8 +18,8 @@ class AddScreen extends StatefulWidget {
 class _AddScreenState extends State<AddScreen> {
   final GlobalKey<FormState> formKey = new GlobalKey<FormState>();
 
-  late String title, blogPoster, description;
-  late File _image;
+  late String title, blogPoster, description, source;
+  File _image = File("");
   final ImagePicker picker = ImagePicker();
   firebase_storage.FirebaseStorage storage =
       firebase_storage.FirebaseStorage.instance;
@@ -48,9 +49,13 @@ class _AddScreenState extends State<AddScreen> {
         .doc(uploadTime)
         .set({
       "uploadTime": uploadTime,
+      "author": FirebaseAuth.instance.currentUser!.uid,
       "title": title,
       "blogPoster": blogPoster,
       "description": description,
+      "source": source,
+      "likes": {},
+      "comments": {},
     });
   }
 
@@ -63,7 +68,7 @@ class _AddScreenState extends State<AddScreen> {
         child: Form(
           key: formKey,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -78,23 +83,29 @@ class _AddScreenState extends State<AddScreen> {
                       height: MediaQuery.of(context).size.height * 0.3,
                       width: MediaQuery.of(context).size.width - 40,
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.black54),
+                        border: Border.all(
+                            color: !_image.isAbsolute
+                                ? Colors.transparent
+                                : Colors.black54),
                         borderRadius: BorderRadius.all(
                           Radius.circular(10),
                         ),
-                        image: DecorationImage(
-                          image: AssetImage(
-                            "assets/images/addImage.jpg",
-                          ),
-                          fit: BoxFit.fill,
-                        ),
                       ),
-                      // child: _image.isAbsolute
-                      //     ? SizedBox()
-                      //     : Image.file(
-                      //         _image,
-                      //         fit: BoxFit.fill,
-                      //       ),
+                      child: !_image.isAbsolute
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.image),
+                                SizedBox(
+                                  width: 10,
+                                ),
+                                Text("Add Image"),
+                              ],
+                            )
+                          : Image.file(
+                              _image,
+                              fit: BoxFit.contain,
+                            ),
                     ),
                   ),
                 ),
@@ -105,47 +116,72 @@ class _AddScreenState extends State<AddScreen> {
                   onChanged: (val) {
                     setState(() => title = val);
                   },
+                  validator: (String? val) {
+                    if (val!.isEmpty) {
+                      return "Please fill the title";
+                    }
+                    return null;
+                  },
                   maxLines: 1,
                   keyboardType: TextInputType.name,
                   textCapitalization: TextCapitalization.words,
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
-                    labelText: "Title",
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        // color: Colors.transparent,
-                        style: BorderStyle.none,
-                      ),
-                      borderRadius: BorderRadius.circular(5.0),
-                    ),
+                    labelText: "Title *",
+                    focusedBorder: InputBorder.none,
+                    enabledBorder: InputBorder.none,
                   ),
                 ),
                 SizedBox(
-                  height: 10,
+                  height: 20,
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: TextFormField(
-                    maxLines: 8,
-                    onChanged: (val) {
-                      setState(() => description = val);
-                    },
-                    keyboardType: TextInputType.text,
-                    textCapitalization: TextCapitalization.sentences,
-                    textInputAction: TextInputAction.done,
-                    decoration: InputDecoration(
-                      alignLabelWithHint: true,
-                      labelText: "Blog description",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(5.0),
-                      ),
-                    ),
+                TextFormField(
+                  onChanged: (val) {
+                    setState(() => source = val);
+                  },
+                  validator: (String? val) {
+                    if (val!.isEmpty) {
+                      source = "NA";
+                    }
+                  },
+                  maxLines: 1,
+                  keyboardType: TextInputType.name,
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.next,
+                  decoration: InputDecoration(
+                    labelText: "Source",
+                    focusedBorder: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                  ),
+                ),
+                SizedBox(
+                  height: 20,
+                ),
+                TextFormField(
+                  maxLines: 8,
+                  onChanged: (val) {
+                    setState(() => description = val);
+                  },
+                  validator: (String? val) {
+                    if (val!.isEmpty) {
+                      return "Please fill the description";
+                    }
+                    return null;
+                  },
+                  keyboardType: TextInputType.text,
+                  textCapitalization: TextCapitalization.sentences,
+                  textInputAction: TextInputAction.done,
+                  decoration: InputDecoration(
+                    alignLabelWithHint: true,
+                    labelText: "Blog description *",
+                    focusedBorder: InputBorder.none,
+                    enabledBorder: InputBorder.none,
                   ),
                 ),
                 Spacer(),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    elevation: 5,
+                    elevation: 3,
                     primary: Colors.white,
                     onPrimary: Colors.black,
                     shape: RoundedRectangleBorder(
@@ -155,17 +191,29 @@ class _AddScreenState extends State<AddScreen> {
                   onPressed: () async {
                     if (formKey.currentState!.validate()) {
                       upload();
-                      Navigator.of(context).pop();
+                      formKey.currentState!.reset();
+                      setState(() {
+                        _image = File("");
+                      });
+                      Fluttertoast.showToast(
+                        msg: "Successfully posted your blog",
+                        backgroundColor: Colors.white,
+                        textColor: Colors.black54,
+                        toastLength: Toast.LENGTH_SHORT,
+                        gravity: ToastGravity.SNACKBAR,
+                      );
                     } else {
                       Fluttertoast.showToast(
                         msg: "Please fill all the fields",
+                        backgroundColor: Colors.white,
+                        textColor: Colors.black54,
                         toastLength: Toast.LENGTH_SHORT,
                         gravity: ToastGravity.SNACKBAR,
                       );
                     }
                   },
                   icon: Icon(Icons.add),
-                  label: Text("Add"),
+                  label: Text("Post"),
                 ),
               ],
             ),

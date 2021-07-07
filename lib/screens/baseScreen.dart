@@ -12,13 +12,13 @@ class BaseScreen extends StatefulWidget {
 }
 
 class _BaseScreenState extends State<BaseScreen> {
-  int _selectedTabIndex = 1;
+  int _selectedTabIndex = 0;
   final List<Widget> screens = [
     HomeScreen(),
     AddScreen(),
     ProfileScreen(),
   ];
-  final List<String> titles = ["Blog Posts", "Post a Blog", "Profile"];
+  final List<String> titles = ["Blog Posts", "Post a Blog","Profile"];
 
   void _handleIndexChanged(int i) {
     setState(() {
@@ -35,6 +35,7 @@ class _BaseScreenState extends State<BaseScreen> {
           style: TextStyle(
             color: Colors.black54,
             fontSize: 25,
+            fontWeight: FontWeight.w400,
           ),
         ),
         backgroundColor: Colors.transparent,

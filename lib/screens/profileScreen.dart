@@ -58,9 +58,7 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(
-            height: 30,
-          ),
+          Spacer(),
           Text(
             "Details provided by " + user!.providerData[0].providerId,
             style: TextStyle(
