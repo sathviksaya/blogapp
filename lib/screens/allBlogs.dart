@@ -32,7 +32,7 @@ class AllBlogs extends StatelessWidget {
             physics: BouncingScrollPhysics(),
             itemCount: snapshot.data.docs.length,
             itemBuilder: (context, index) {
-              return BlogCard(blog: snapshot.data.docs[index]);
+              return BlogCard(blog: snapshot.data.docs[snapshot.data.docs.length-index-1]);
             },
           ),
         );
